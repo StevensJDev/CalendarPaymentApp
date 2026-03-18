@@ -1,0 +1,87 @@
+.calendar {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-header-cell {
+  background: #6366f1;
+  color: #fff;
+  text-align: center;
+  padding: 0.6rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.calendar-cell {
+  min-height: 90px;
+  padding: 0.4rem 0.4rem 0.3rem;
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+  position: relative;
+  background: #fff;
+  transition: background 0.15s;
+}
+
+.calendar-cell.empty {
+  background: #f8fafc;
+  pointer-events: none;
+}
+
+.calendar-cell.today .day-number {
+  background: #6366f1;
+  color: #fff;
+  border-radius: 50%;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-cell.has-payments {
+  background: #f0f0ff;
+}
+
+.day-number {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-bottom: 0.2rem;
+}
+
+.payment-markers {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-marker {
+  display: block;
+  background: #6366f1;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  padding: 1px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  cursor: default;
+}
+
+.payment-marker.more {
+  background: #94a3b8;
+}
