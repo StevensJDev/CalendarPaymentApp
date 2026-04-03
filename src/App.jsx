@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import PaymentForm from './components/PaymentForm';
 import Calendar from './components/Calendar';
 import PaymentList from './components/PaymentList';
+import IncomeRecurringForm from './components/IncomeRecurringForm';
 import './App.css';
 
 const MONTH_NAMES = [
@@ -91,7 +92,30 @@ function buildPaymentsByDate(occurrences) {
 
 export default function App() {
   const today = new Date();
-  const [payments, setPayments] = useState([]);
+  // Load payments from localStorage on first render
+  const [payments, setPayments] = useState(() => {
+    const saved = localStorage.getItem('payments');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  // Recurring incomes
+  const [incomes, setIncomes] = useState(() => {
+    const saved = localStorage.getItem('incomes');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' | 'list'
@@ -99,15 +123,29 @@ export default function App() {
   function handleAddPayment(payment) {
     setPayments((prev) => [...prev, payment]);
   }
-
+  function handleAddIncome(income) {
+    setIncomes((prev) => [...prev, income]);
+  }
   function handleDeletePayment(id) {
     setPayments((prev) => prev.filter((p) => p.id !== id));
   }
 
+  // Save payments to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('payments', JSON.stringify(payments));
+  }, [payments]);
+  // Save incomes to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('incomes', JSON.stringify(incomes));
+  }, [incomes]);
+
   const allOccurrences = useMemo(() => {
     return payments.flatMap((p) => getOccurrences(p, currentYear - 1, currentYear + 1));
   }, [payments, currentYear]);
-
+  // Income occurrences
+  const allIncomeOccurrences = useMemo(() => {
+    return incomes.flatMap((i) => getOccurrences(i, currentYear - 1, currentYear + 1));
+  }, [incomes, currentYear]);
   const paymentsByDate = useMemo(() => buildPaymentsByDate(allOccurrences), [allOccurrences]);
 
   function prevMonth() {
@@ -118,7 +156,6 @@ export default function App() {
       setCurrentMonth((m) => m - 1);
     }
   }
-
   function nextMonth() {
     if (currentMonth === 11) {
       setCurrentMonth(0);
@@ -127,14 +164,22 @@ export default function App() {
       setCurrentMonth((m) => m + 1);
     }
   }
-
   function prevYear() {
     setCurrentYear((y) => y - 1);
   }
-
   function nextYear() {
     setCurrentYear((y) => y + 1);
   }
+
+  // Calculate monthly total payments and incomes for the current month
+  const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+  const monthlyPayments = allOccurrences.filter(
+    (o) => o.date.startsWith(monthStr)
+  ).reduce((sum, o) => sum + o.amount, 0);
+  const monthlyIncome = allIncomeOccurrences.filter(
+    (o) => o.date.startsWith(monthStr)
+  ).reduce((sum, o) => sum + o.amount, 0);
+  const monthlyLeftover = monthlyIncome - monthlyPayments;
 
   return (
     <div className="app">
@@ -144,12 +189,11 @@ export default function App() {
           <p className="app-subtitle">Track and visualize your recurring payments</p>
         </div>
       </header>
-
       <main className="app-main">
         <aside className="sidebar">
+          <IncomeRecurringForm onAddIncome={handleAddIncome} />
           <PaymentForm onAddPayment={handleAddPayment} />
         </aside>
-
         <section className="content">
           <div className="tab-bar">
             <button
@@ -165,7 +209,13 @@ export default function App() {
               Year View / Payment List
             </button>
           </div>
-
+          <div style={{ margin: '1rem 0', fontWeight: 600, color: '#6366f1' }}>
+            <>
+              Monthly Income: <span style={{ color: '#059669' }}>${monthlyIncome.toFixed(2)}</span> &nbsp;|&nbsp; 
+              Payments: <span style={{ color: '#ef4444' }}>${monthlyPayments.toFixed(2)}</span> &nbsp;|&nbsp; 
+              Leftover: <span style={{ color: monthlyLeftover >= 0 ? '#059669' : '#ef4444' }}>${monthlyLeftover.toFixed(2)}</span>
+            </>
+          </div>
           {activeTab === 'calendar' && (
             <div className="calendar-section">
               <div className="calendar-nav">
